@@ -1,0 +1,42 @@
+services:
+  n8n:
+    build: .
+    image: n8n-viral-shorts:latest
+    container_name: n8n-viral-shorts
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    env_file:
+      - .env
+    environment:
+      - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
+      - NODE_OPTIONS=--max-old-space-size=170
+      - UV_THREADPOOL_SIZE=2
+      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=none
+      - EXECUTIONS_DATA_SAVE_ON_ERROR=none
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=24
+      - N8N_PUBLIC_API_DISABLED=true
+    volumes:
+      - n8n_data:/home/node/.n8n
+    # --- Hard RAM cap: 400MB total, no exceptions. mem_reservation is a soft
+    # target the kernel tries to respect first; mem_limit is the hard ceiling
+    # docker will OOM-kill the container at the instant it's crossed.
+    # memswap_limit = mem_limit + swap headroom, so a momentary spike (the
+    # heaviest single pass is the "Concat + BGM + Subtitle" color-grade/glow/
+    # subtitle-burn ffmpeg call, now on 640x1136 frames instead of 720x1280)
+    # degrades into swapping ("slow") instead of an OOM kill - but ONLY if
+    # the host actually has swap enabled (see README - this is mandatory
+    # at this cap, not optional).
+    mem_reservation: 300m
+    mem_limit: 400m
+    memswap_limit: 900m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  n8n_data:
