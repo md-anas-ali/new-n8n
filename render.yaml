@@ -1,0 +1,134 @@
+services:
+  - type: web
+    name: n8n-4899
+    runtime: docker
+    plan: standard          # <- set to match your actual Render plan / RAM
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      # ---- n8n core ----
+      - key: N8N_HOST
+        value: n8n-4899.onrender.com
+      - key: N8N_EDITOR_BASE_URL
+        value: https://n8n-4899.onrender.com
+      - key: N8N_PROTOCOL
+        value: https
+      - key: N8N_PORT
+        value: "5678"
+      - key: WEBHOOK_URL
+        value: https://n8n-4899.onrender.com
+      - key: N8N_PROXY_HOPS
+        value: "1"
+      - key: N8N_SECURE_COOKIE
+        value: "true"
+
+      # ---- auth / encryption ----
+      - key: N8N_BASIC_AUTH_ACTIVE
+        value: "true"
+      - key: N8N_BASIC_AUTH_USER
+        value: mranasali68@gmail.com
+      - key: N8N_BASIC_AUTH_PASSWORD
+        sync: false          # secret -- set manually in Render dashboard, don't commit
+      - key: N8N_ENCRYPTION_KEY
+        sync: false          # secret -- set manually in Render dashboard, don't commit
+
+      # ---- database (Neon Postgres) ----
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_HOST
+        value: dpg-d9d6cud7vvec73evmkv0-a
+      - key: DB_POSTGRESDB_PORT
+        value: "5432"
+      - key: DB_POSTGRESDB_DATABASE
+        value: n8n_database_r0k2
+      - key: DB_POSTGRESDB_USER
+        value: n8n_database_r0k2_user
+      - key: DB_POSTGRESDB_PASSWORD
+        sync: false          # secret
+      - key: DB_POSTGRESDB_CONNECTION_URL
+        sync: false          # secret (contains password) -- set manually in dashboard
+      - key: DB_POSTGRESDB_SSL_ENABLED
+        value: "true"
+      - key: DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED
+        value: "false"
+
+      # ---- RAM / execution behavior ----
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=400"
+      - key: N8N_DEFAULT_BINARY_DATA_MODE
+        value: filesystem
+      - key: N8N_DIAGNOSTICS_ENABLED
+        value: "false"
+      - key: N8N_LOG_LEVEL
+        value: warn
+      - key: N8N_RUNNERS_ENABLED
+        value: "false"
+      - key: N8N_CONCURRENCY_PRODUCTION_LIMIT
+        value: "1"
+      - key: OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS
+        value: "false"
+      - key: NODE_FUNCTION_ALLOW_BUILTIN
+        value: fs
+      - key: N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE
+        value: "true"
+      - key: N8N_MCP_ENABLED
+        value: "true"
+      - key: N8N_PERSONALIZATION_ENABLED
+        value: "false"
+      - key: N8N_TEMPLATES_ENABLED
+        value: "false"
+      - key: N8N_VERSION_NOTIFICATIONS_ENABLED
+        value: "false"
+      - key: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
+        value: "true"
+
+      # ---- executions / pruning ----
+      - key: EXECUTIONS_DATA_SAVE_ON_SUCCESS
+        value: none
+      - key: EXECUTIONS_DATA_MAX_AGE
+        value: "24"
+      - key: EXECUTIONS_DATA_PRUNE_MAX_COUNT
+        value: "true"
+      - key: EXECUTIONS_TIMEOUT
+        value: "3600"
+      - key: N8N_PRUNING_ENABLED
+        value: "true"
+      - key: N8N_PRUNING_EXECUTION_DATA_MAX_AGE
+        value: "24"
+
+      # ---- CONFIRMED used inside the workflow JSON (pick(mc.x, $env.X, default)) ----
+      - key: OPENROUTER_API_KEY
+        sync: false          # secret
+      - key: YOUTUBE_DATA_API_KEY
+        sync: false          # secret
+      - key: GOOGLE_SHEET_ID
+        value: 1St7QXSs1fCA_C3Mct6t0opBFDUcj7znkWXaUxVOARpM
+      - key: GOOGLE_SHEET_TAB_QC_LOG
+        value: "QC Log"
+      - key: GOOGLE_SHEET_TAB_USED_TOPICS
+        value: UsedTopics
+      - key: CONTENT_CATEGORY
+        value: Entertainment
+      - key: TRENDS_REGION
+        value: US
+      - key: YOUTUBE_CATEGORY_ID
+        value: "24"
+      - key: APP_REFERER_URL
+        value: https://n8n-4899.onrender.com
+      - key: SUCCESS_EMAIL
+        value: anas015987@gmail.com
+      - key: ERROR_EMAIL
+        value: mdanasali9810@gmail.com
+      - key: QC_ALERT_EMAIL
+        value: anas015987@gmail.com
+
+      # ---- TTS: read directly as shell env vars inside the Execute Command / TTS node ----
+      - key: ELEVENLABS_API_KEY
+        sync: false          # secret
+      - key: ELEVENLABS_VOICE_ID
+        value: pNInz6obpgDQGcFmaJgB
+      - key: EDGE_TTS_VOICE
+        value: en-US-AndrewNeural
+
+      - key: NOTIFY_WEBHOOK_URL
+        value: ""
