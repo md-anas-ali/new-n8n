@@ -1,0 +1,150 @@
+########################################################################
+# Render Blueprint — n8n "cinematic motion v2 master control" workflow
+# Free plan. Push this to your repo root, then in Render:
+#   New → Blueprint → connect this repo → Apply
+########################################################################
+
+services:
+  - type: web
+    name: n8n-cinematic-motion   # <- change if you like; becomes <name>.onrender.com
+    runtime: docker
+    plan: free                   # 512MB RAM / 0.1 CPU, sleeps after 15 min idle (see warning below)
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+
+    envVars:
+      # ---- n8n core ----
+      # Self-references this same service's public hostname — no need to type
+      # it in twice, and it stays correct if you rename the service.
+      - key: N8N_HOST
+        fromService:
+          name: n8n-cinematic-motion
+          type: web
+          envVarKey: RENDER_EXTERNAL_HOSTNAME
+      - key: N8N_EDITOR_BASE_URL
+        value: https://n8n-cinematic-motion.onrender.com   # <- confirm this matches the real URL after first deploy
+      - key: WEBHOOK_URL
+        value: https://n8n-cinematic-motion.onrender.com   # <- same here
+      - key: N8N_PROTOCOL
+        value: https
+      - key: N8N_PORT
+        value: "5678"
+      - key: N8N_PROXY_HOPS
+        value: "1"
+      - key: N8N_SECURE_COOKIE
+        value: "true"
+
+      # ---- auth / encryption (auto-generated — nothing to type for these two) ----
+      - key: N8N_BASIC_AUTH_ACTIVE
+        value: "true"
+      - key: N8N_BASIC_AUTH_USER
+        sync: false             # you'll be prompted for this on first Blueprint deploy
+      - key: N8N_BASIC_AUTH_PASSWORD
+        generateValue: true     # Render generates a strong random value automatically
+      - key: N8N_ENCRYPTION_KEY
+        generateValue: true     # generated once, then stays fixed across redeploys
+
+      # ---- database: external Postgres (Neon) ----
+      # Deliberately NOT a Render-managed `databases:` entry — Render's free
+      # Postgres auto-deletes after its trial window, which would wipe your
+      # workflows/credentials. Neon's free tier persists indefinitely, so
+      # external + sync:false is the safer choice for a free-tier setup.
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_HOST
+        sync: false
+      - key: DB_POSTGRESDB_PORT
+        value: "5432"
+      - key: DB_POSTGRESDB_DATABASE
+        sync: false
+      - key: DB_POSTGRESDB_USER
+        sync: false
+      - key: DB_POSTGRESDB_PASSWORD
+        sync: false
+      - key: DB_POSTGRESDB_SSL_ENABLED
+        value: "true"
+      - key: DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED
+        value: "false"
+
+      # ---- RAM / execution behavior (tuned for the 512MB free instance) ----
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=256"
+      - key: N8N_DEFAULT_BINARY_DATA_MODE
+        value: filesystem
+      - key: N8N_DIAGNOSTICS_ENABLED
+        value: "false"
+      - key: N8N_LOG_LEVEL
+        value: warn
+      - key: N8N_RUNNERS_ENABLED
+        value: "false"
+      - key: N8N_CONCURRENCY_PRODUCTION_LIMIT
+        value: "1"
+      - key: OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS
+        value: "false"
+      - key: NODE_FUNCTION_ALLOW_BUILTIN
+        value: fs
+      - key: N8N_PERSONALIZATION_ENABLED
+        value: "false"
+      - key: N8N_TEMPLATES_ENABLED
+        value: "false"
+      - key: N8N_VERSION_NOTIFICATIONS_ENABLED
+        value: "false"
+      - key: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
+        value: "true"
+      - key: GENERIC_TIMEZONE
+        value: Asia/Dhaka
+      - key: TZ
+        value: Asia/Dhaka
+
+      # ---- executions / pruning ----
+      - key: EXECUTIONS_DATA_SAVE_ON_SUCCESS
+        value: none
+      - key: EXECUTIONS_DATA_SAVE_ON_ERROR
+        value: all
+      - key: EXECUTIONS_DATA_MAX_AGE
+        value: "24"
+      - key: EXECUTIONS_DATA_PRUNE_MAX_COUNT
+        value: "5000"
+      - key: EXECUTIONS_TIMEOUT
+        value: "3600"
+      - key: N8N_PRUNING_ENABLED
+        value: "true"
+      - key: N8N_PRUNING_EXECUTION_DATA_MAX_AGE
+        value: "24"
+
+      # ---- confirmed used inside this workflow's JSON (pick(mc.x, $env.X, default)) ----
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: YOUTUBE_DATA_API_KEY
+        sync: false
+      - key: GOOGLE_SHEET_ID
+        sync: false
+      - key: GOOGLE_SHEET_TAB_QC_LOG
+        value: "QC Log"
+      - key: GOOGLE_SHEET_TAB_USED_TOPICS
+        value: UsedTopics
+      - key: CONTENT_CATEGORY
+        value: Entertainment
+      - key: TRENDS_REGION
+        value: US
+      - key: YOUTUBE_CATEGORY_ID
+        value: "24"
+      - key: APP_REFERER_URL
+        value: https://n8n-cinematic-motion.onrender.com   # <- keep in sync with the URL above
+      - key: SUCCESS_EMAIL
+        sync: false
+      - key: ERROR_EMAIL
+        sync: false
+      - key: QC_ALERT_EMAIL
+        sync: false
+      - key: NOTIFY_WEBHOOK_URL
+        value: ""
+
+      # ---- TTS: read as shell env vars inside the Execute Command / TTS node ----
+      - key: ELEVENLABS_API_KEY
+        sync: false            # optional — workflow falls back to Edge-TTS if unset
+      - key: ELEVENLABS_VOICE_ID
+        value: pNInz6obpgDQGcFmaJgB
+      - key: EDGE_TTS_VOICE
+        value: en-US-AndrewNeural
